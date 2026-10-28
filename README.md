@@ -2,7 +2,7 @@
 
 A Minecraft Java Edition launcher and mod development workspace for VS Code.
 
-[简体中文](#简体中文) · [中文使用说明](README.zh-CN.md) · [MIT License](LICENSE)
+[Releases](https://github.com/lopleec/VSCode-minecraft-workbench/releases/latest) · [简体中文](#简体中文) · [中文使用说明](README.zh-CN.md) · [MIT License](LICENSE)
 
 Native sidebar views, commands, settings, tasks and output channels keep the extension at home in VS Code. Editor pages follow your theme, including light, dark and high contrast. The default language follows VS Code; English and Simplified Chinese can also be selected manually.
 
@@ -15,7 +15,14 @@ Native sidebar views, commands, settings, tasks and output channels keep the ext
 - Internet access for initial downloads. A fully installed instance can launch with an offline account without refreshing the version manifest.
 - In SSH, WSL or container workspaces, files and processes live on the **extension host machine**. Launching a game there requires a graphical session.
 
-Download the VSIX from a successful [CI run](https://github.com/lopleec/VSCode-minecraft-workbench/actions/workflows/ci.yml) under **Artifacts → minecraft-workbench-vsix**, then unzip it. To build from source, use Node.js **22.14 or later**:
+1. Open the [latest release](https://github.com/lopleec/VSCode-minecraft-workbench/releases/latest).
+2. Under **Assets**, download `minecraft-workbench-<version>.vsix`.
+3. In VS Code, run **Extensions: Install from VSIX…** and select the downloaded file.
+4. Reload VS Code if prompted, then open **Minecraft** in the activity bar.
+
+Use a trusted workspace to enable operations that download files or run processes. Development builds are available from successful [CI runs](https://github.com/lopleec/VSCode-minecraft-workbench/actions/workflows/ci.yml) under **Artifacts → minecraft-workbench-vsix**; unzip the artifact before installing its VSIX.
+
+To build from source, use Node.js **22.14 or later**:
 
 ```sh
 git clone https://github.com/lopleec/VSCode-minecraft-workbench.git
@@ -24,7 +31,7 @@ npm ci
 npm run package
 ```
 
-In VS Code, run **Extensions: Install from VSIX…**, select the generated `.vsix`, then open **Minecraft** in the activity bar. Use a trusted workspace to enable operations that download files or run processes.
+Install the generated `.vsix` using the same steps above.
 
 ### First use and agreements
 
@@ -168,7 +175,14 @@ Built with the [VS Code API](https://code.visualstudio.com/api), [XMCL](https://
 
 需要桌面版 **VS Code 1.103+**，仅支持 **Minecraft Java 版**。游戏所需 Java 可在插件中检测、手动添加或下载；开发模组需要 JDK。首次下载需要网络，完整安装后可使用离线账户启动，无需重新获取版本清单。
 
-可从成功的 [CI 运行](https://github.com/lopleec/VSCode-minecraft-workbench/actions/workflows/ci.yml) 中下载 **Artifacts → minecraft-workbench-vsix** 并解压。也可使用 **Node.js 22.14+** 从源码打包：
+1. 打开 [最新 Release](https://github.com/lopleec/VSCode-minecraft-workbench/releases/latest)。
+2. 在 **Assets** 中下载 `minecraft-workbench-<版本号>.vsix`。
+3. 在 VS Code 中执行 **扩展：从 VSIX 安装…**，选择下载的文件。
+4. 按提示重新加载 VS Code，然后打开活动栏中的 **Minecraft**。
+
+下载和启动进程需要受信任的工作区。开发构建可从成功的 [CI 运行](https://github.com/lopleec/VSCode-minecraft-workbench/actions/workflows/ci.yml) 中下载 **Artifacts → minecraft-workbench-vsix**，解压后安装其中的 VSIX。
+
+也可使用 **Node.js 22.14+** 从源码打包：
 
 ```sh
 git clone https://github.com/lopleec/VSCode-minecraft-workbench.git
@@ -177,7 +191,7 @@ npm ci
 npm run package
 ```
 
-在 VS Code 中执行 **扩展：从 VSIX 安装…**，选择生成的 `.vsix`，然后打开活动栏中的 **Minecraft**。下载和启动进程需要受信任的工作区。SSH、WSL、容器中的文件和进程位于扩展宿主机器；在远程机器运行游戏需要图形环境。
+生成的 `.vsix` 按上面的步骤安装。SSH、WSL、容器中的文件和进程位于扩展宿主机器；在远程机器运行游戏需要图形环境。
 
 ### 首次使用与协议
 
