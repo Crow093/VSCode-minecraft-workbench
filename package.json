@@ -2,7 +2,7 @@
   "name": "minecraft-workbench",
   "displayName": "Minecraft Workbench",
   "description": "%extension.description%",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "publisher": "minecraft-workbench",
   "license": "MIT",
   "engines": {
@@ -1884,5 +1884,6 @@
   "homepage": "https://github.com/lopleec/VSCode-minecraft-workbench#readme",
   "bugs": {
     "url": "https://github.com/lopleec/VSCode-minecraft-workbench/issues"
-  }
+  },
+  "icon": "media/icon.png"
 }
