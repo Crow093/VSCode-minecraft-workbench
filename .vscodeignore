@@ -1,0 +1,15 @@
+src/**
+test/**
+scripts/**
+.vscode/**
+.gitignore
+licenses/**
+.prettierrc.json
+node_modules/**
+out/**
+.vscode-test/**
+*.mjs
+tsconfig.json
+package-lock.json
+dist/*.map
+.github/**

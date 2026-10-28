@@ -1,0 +1,1864 @@
+{
+  "name": "minecraft-workbench",
+  "displayName": "Minecraft Workbench",
+  "description": "%extension.description%",
+  "version": "0.3.1",
+  "publisher": "minecraft-workbench",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.103.0",
+    "node": ">=22.14.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers"
+  ],
+  "keywords": [
+    "minecraft",
+    "launcher",
+    "fabric",
+    "forge",
+    "neoforge",
+    "modrinth"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "scripts": {
+    "compile": "tsc --noEmit && node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --require ./test/preload.cjs --import tsx --test test/*.test.ts",
+    "package": "npm run licenses && vsce package --no-dependencies --githubBranch main",
+    "vscode:prepublish": "npm run compile",
+    "test:host": "node scripts/test-host.mjs",
+    "licenses": "node scripts/licenses.mjs",
+    "format": "prettier --write src test scripts .vscode esbuild.mjs tsconfig.json package.json package.nls.json package.nls.zh-cn.json",
+    "format:check": "prettier --check src test scripts .vscode esbuild.mjs tsconfig.json package.json package.nls.json package.nls.zh-cn.json"
+  },
+  "dependencies": {
+    "@xmcl/core": "2.16.2",
+    "@xmcl/installer": "6.3.6",
+    "adm-zip": "0.6.1",
+    "semver": "^7.8.5",
+    "socks": "^2.8.7",
+    "tar": "^7.5.0",
+    "undici": "^7.29.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.14.0",
+    "@types/semver": "^7.8.0",
+    "@types/vscode": "1.103.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "prettier": "3.6.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  },
+  "overrides": {
+    "@xmcl/unzip": "2.2.0",
+    "@xmcl/yauzl": "2.10.0",
+    "@xmcl/asm": "1.0.1",
+    "@xmcl/file-transfer": "2.1.4",
+    "@vscode/vsce": {
+      "@azure/identity": "4.13.0"
+    },
+    "@azure/msal-node": {
+      "uuid": "^11.1.1"
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "minecraftWorkbench.mode",
+        "title": "Switch Mode",
+        "category": "Minecraft Workbench",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "minecraftWorkbench.mode.zh",
+        "title": "切换模式",
+        "category": "Minecraft Workbench",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "minecraftWorkbench.createInstance",
+        "title": "New Instance",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.createInstance.zh",
+        "title": "新建实例",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.selectInstance",
+        "title": "Select Instance",
+        "category": "Minecraft Workbench",
+        "icon": "$(check)"
+      },
+      {
+        "command": "minecraftWorkbench.selectInstance.zh",
+        "title": "选择实例",
+        "category": "Minecraft Workbench",
+        "icon": "$(check)"
+      },
+      {
+        "command": "minecraftWorkbench.launch",
+        "title": "Launch Minecraft",
+        "category": "Minecraft Workbench",
+        "icon": "$(play)"
+      },
+      {
+        "command": "minecraftWorkbench.launch.zh",
+        "title": "启动 Minecraft",
+        "category": "Minecraft Workbench",
+        "icon": "$(play)"
+      },
+      {
+        "command": "minecraftWorkbench.stop",
+        "title": "Stop Minecraft",
+        "category": "Minecraft Workbench",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "minecraftWorkbench.stop.zh",
+        "title": "停止 Minecraft",
+        "category": "Minecraft Workbench",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "minecraftWorkbench.install",
+        "title": "Install / Repair Instance",
+        "category": "Minecraft Workbench",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "minecraftWorkbench.install.zh",
+        "title": "安装 / 修复实例",
+        "category": "Minecraft Workbench",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "minecraftWorkbench.configureInstance",
+        "title": "Configure Instance",
+        "category": "Minecraft Workbench",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "minecraftWorkbench.configureInstance.zh",
+        "title": "配置实例",
+        "category": "Minecraft Workbench",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "minecraftWorkbench.deleteInstance",
+        "title": "Delete Instance",
+        "category": "Minecraft Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "minecraftWorkbench.deleteInstance.zh",
+        "title": "删除实例",
+        "category": "Minecraft Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "minecraftWorkbench.openInstance",
+        "title": "Open Game Directory",
+        "category": "Minecraft Workbench",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "minecraftWorkbench.openInstance.zh",
+        "title": "打开游戏目录",
+        "category": "Minecraft Workbench",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "minecraftWorkbench.gameLog",
+        "title": "Open Game Log",
+        "category": "Minecraft Workbench",
+        "icon": "$(output)"
+      },
+      {
+        "command": "minecraftWorkbench.gameLog.zh",
+        "title": "打开游戏日志",
+        "category": "Minecraft Workbench",
+        "icon": "$(output)"
+      },
+      {
+        "command": "minecraftWorkbench.exportInstance",
+        "title": "Export Instance Settings",
+        "category": "Minecraft Workbench",
+        "icon": "$(export)"
+      },
+      {
+        "command": "minecraftWorkbench.exportInstance.zh",
+        "title": "导出实例设置",
+        "category": "Minecraft Workbench",
+        "icon": "$(export)"
+      },
+      {
+        "command": "minecraftWorkbench.addAccount",
+        "title": "Add Account",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.addAccount.zh",
+        "title": "添加账户",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.selectAccount",
+        "title": "Select Account",
+        "category": "Minecraft Workbench",
+        "icon": "$(check)"
+      },
+      {
+        "command": "minecraftWorkbench.selectAccount.zh",
+        "title": "选择账户",
+        "category": "Minecraft Workbench",
+        "icon": "$(check)"
+      },
+      {
+        "command": "minecraftWorkbench.removeAccount",
+        "title": "Remove Account",
+        "category": "Minecraft Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "minecraftWorkbench.removeAccount.zh",
+        "title": "移除账户",
+        "category": "Minecraft Workbench",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "minecraftWorkbench.detectJava",
+        "title": "Detect Local Java",
+        "category": "Minecraft Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "minecraftWorkbench.detectJava.zh",
+        "title": "检测本地 Java",
+        "category": "Minecraft Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "minecraftWorkbench.addJava",
+        "title": "Add Java Executable",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.addJava.zh",
+        "title": "添加 Java 可执行文件",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.downloadJava",
+        "title": "Download JDK",
+        "category": "Minecraft Workbench",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "minecraftWorkbench.downloadJava.zh",
+        "title": "下载 JDK",
+        "category": "Minecraft Workbench",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "minecraftWorkbench.javaActions",
+        "title": "Manage Java",
+        "category": "Minecraft Workbench",
+        "icon": "$(symbol-method)"
+      },
+      {
+        "command": "minecraftWorkbench.javaActions.zh",
+        "title": "管理 Java",
+        "category": "Minecraft Workbench",
+        "icon": "$(symbol-method)"
+      },
+      {
+        "command": "minecraftWorkbench.search",
+        "title": "Search Modrinth",
+        "category": "Minecraft Workbench",
+        "icon": "$(search)"
+      },
+      {
+        "command": "minecraftWorkbench.search.zh",
+        "title": "搜索 Modrinth",
+        "category": "Minecraft Workbench",
+        "icon": "$(search)"
+      },
+      {
+        "command": "minecraftWorkbench.importPack",
+        "title": "Import Modpack",
+        "category": "Minecraft Workbench",
+        "icon": "$(package)"
+      },
+      {
+        "command": "minecraftWorkbench.importPack.zh",
+        "title": "导入整合包",
+        "category": "Minecraft Workbench",
+        "icon": "$(package)"
+      },
+      {
+        "command": "minecraftWorkbench.contentActions",
+        "title": "Manage Content",
+        "category": "Minecraft Workbench",
+        "icon": "$(extensions)"
+      },
+      {
+        "command": "minecraftWorkbench.contentActions.zh",
+        "title": "管理内容",
+        "category": "Minecraft Workbench",
+        "icon": "$(extensions)"
+      },
+      {
+        "command": "minecraftWorkbench.checkUpdates",
+        "title": "Check Content Updates",
+        "category": "Minecraft Workbench",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "minecraftWorkbench.checkUpdates.zh",
+        "title": "检查内容更新",
+        "category": "Minecraft Workbench",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "minecraftWorkbench.conflicts",
+        "title": "Check Mod Conflicts",
+        "category": "Minecraft Workbench",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "minecraftWorkbench.conflicts.zh",
+        "title": "检查模组冲突",
+        "category": "Minecraft Workbench",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "minecraftWorkbench.backups",
+        "title": "World Backups",
+        "category": "Minecraft Workbench",
+        "icon": "$(history)"
+      },
+      {
+        "command": "minecraftWorkbench.backups.zh",
+        "title": "存档备份",
+        "category": "Minecraft Workbench",
+        "icon": "$(history)"
+      },
+      {
+        "command": "minecraftWorkbench.createProject",
+        "title": "New Mod Project",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.createProject.zh",
+        "title": "新建模组项目",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.importProject",
+        "title": "Import Gradle Project",
+        "category": "Minecraft Workbench",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "minecraftWorkbench.importProject.zh",
+        "title": "导入 Gradle 项目",
+        "category": "Minecraft Workbench",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "minecraftWorkbench.projectActions",
+        "title": "Project Actions",
+        "category": "Minecraft Workbench",
+        "icon": "$(code)"
+      },
+      {
+        "command": "minecraftWorkbench.projectActions.zh",
+        "title": "项目操作",
+        "category": "Minecraft Workbench",
+        "icon": "$(code)"
+      },
+      {
+        "command": "minecraftWorkbench.jobActions",
+        "title": "Manage Task",
+        "category": "Minecraft Workbench",
+        "icon": "$(tasklist)"
+      },
+      {
+        "command": "minecraftWorkbench.jobActions.zh",
+        "title": "管理任务",
+        "category": "Minecraft Workbench",
+        "icon": "$(tasklist)"
+      },
+      {
+        "command": "minecraftWorkbench.refreshManifest",
+        "title": "Update Version Manifest",
+        "category": "Minecraft Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "minecraftWorkbench.refreshManifest.zh",
+        "title": "更新版本清单",
+        "category": "Minecraft Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "minecraftWorkbench.refresh",
+        "title": "Refresh Views",
+        "category": "Minecraft Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "minecraftWorkbench.refresh.zh",
+        "title": "刷新视图",
+        "category": "Minecraft Workbench",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "minecraftWorkbench.settings",
+        "title": "Settings",
+        "category": "Minecraft Workbench",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "minecraftWorkbench.settings.zh",
+        "title": "设置",
+        "category": "Minecraft Workbench",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "minecraftWorkbench.output",
+        "title": "Show Output",
+        "category": "Minecraft Workbench",
+        "icon": "$(output)"
+      },
+      {
+        "command": "minecraftWorkbench.output.zh",
+        "title": "显示输出",
+        "category": "Minecraft Workbench",
+        "icon": "$(output)"
+      },
+      {
+        "command": "minecraftWorkbench.openStorage",
+        "title": "Open Storage Directory",
+        "category": "Minecraft Workbench",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "minecraftWorkbench.openStorage.zh",
+        "title": "打开存储目录",
+        "category": "Minecraft Workbench",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "minecraftWorkbench.proxyCredentials",
+        "title": "Set Proxy Credentials",
+        "category": "Minecraft Workbench",
+        "icon": "$(key)"
+      },
+      {
+        "command": "minecraftWorkbench.proxyCredentials.zh",
+        "title": "设置代理凭据",
+        "category": "Minecraft Workbench",
+        "icon": "$(key)"
+      },
+      {
+        "command": "minecraftWorkbench.help",
+        "title": "Documentation",
+        "category": "Minecraft Workbench",
+        "icon": "$(book)"
+      },
+      {
+        "command": "minecraftWorkbench.help.zh",
+        "title": "使用文档",
+        "category": "Minecraft Workbench",
+        "icon": "$(book)"
+      },
+      {
+        "command": "minecraftWorkbench.browse",
+        "title": "Browse Content",
+        "category": "Minecraft Workbench",
+        "icon": "$(extensions)"
+      },
+      {
+        "command": "minecraftWorkbench.browse.zh",
+        "title": "浏览内容",
+        "category": "Minecraft Workbench",
+        "icon": "$(extensions)"
+      },
+      {
+        "command": "minecraftWorkbench.installed",
+        "title": "Installed Content",
+        "category": "Minecraft Workbench",
+        "icon": "$(package)"
+      },
+      {
+        "command": "minecraftWorkbench.installed.zh",
+        "title": "已安装内容",
+        "category": "Minecraft Workbench",
+        "icon": "$(package)"
+      },
+      {
+        "command": "minecraftWorkbench.inspectInstance",
+        "title": "Instance Settings",
+        "category": "Minecraft Workbench",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "minecraftWorkbench.inspectInstance.zh",
+        "title": "实例设置",
+        "category": "Minecraft Workbench",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "minecraftWorkbench.language",
+        "title": "Change Language",
+        "category": "Minecraft Workbench",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "minecraftWorkbench.language.zh",
+        "title": "切换语言",
+        "category": "Minecraft Workbench",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "minecraftWorkbench.cloneInstance",
+        "title": "Duplicate Instance",
+        "category": "Minecraft Workbench",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "minecraftWorkbench.cloneInstance.zh",
+        "title": "复制实例",
+        "category": "Minecraft Workbench",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "minecraftWorkbench.exportPack",
+        "title": "Export Modpack",
+        "category": "Minecraft Workbench",
+        "icon": "$(export)"
+      },
+      {
+        "command": "minecraftWorkbench.exportPack.zh",
+        "title": "导出整合包",
+        "category": "Minecraft Workbench",
+        "icon": "$(export)"
+      },
+      {
+        "command": "minecraftWorkbench.importContent",
+        "title": "Import Content Files",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.importContent.zh",
+        "title": "导入内容文件",
+        "category": "Minecraft Workbench",
+        "icon": "$(add)"
+      },
+      {
+        "command": "minecraftWorkbench.manageInstances",
+        "title": "Open Instances",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageInstances.zh",
+        "title": "打开实例管理",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageAccounts",
+        "title": "Manage Accounts",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageAccounts.zh",
+        "title": "管理账户",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageJava",
+        "title": "Manage Java",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageJava.zh",
+        "title": "管理 Java",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageTasks",
+        "title": "Manage Tasks",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageTasks.zh",
+        "title": "管理任务",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageProjects",
+        "title": "Manage Projects",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "minecraftWorkbench.manageProjects.zh",
+        "title": "管理项目",
+        "category": "Minecraft Workbench",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "minecraftWorkbench",
+          "title": "Minecraft",
+          "icon": "media/minecraft.svg"
+        }
+      ]
+    },
+    "views": {
+      "minecraftWorkbench": [
+        {
+          "id": "minecraftWorkbench.home",
+          "name": "%view.home%",
+          "initialSize": 1
+        },
+        {
+          "id": "minecraftWorkbench.instances",
+          "name": "%view.instances%",
+          "when": "minecraftWorkbench.mode == launcher",
+          "initialSize": 4
+        },
+        {
+          "id": "minecraftWorkbench.projects",
+          "name": "%view.projects%",
+          "when": "minecraftWorkbench.mode == developer",
+          "initialSize": 4
+        },
+        {
+          "id": "minecraftWorkbench.content",
+          "name": "%view.content%",
+          "when": "minecraftWorkbench.mode == launcher",
+          "initialSize": 1
+        },
+        {
+          "id": "minecraftWorkbench.accounts",
+          "name": "%view.accounts%",
+          "visibility": "collapsed",
+          "initialSize": 1
+        },
+        {
+          "id": "minecraftWorkbench.java",
+          "name": "%view.java%",
+          "visibility": "collapsed",
+          "initialSize": 1
+        },
+        {
+          "id": "minecraftWorkbench.downloads",
+          "name": "%view.downloads%",
+          "visibility": "collapsed",
+          "initialSize": 1
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "minecraftWorkbench.instances",
+        "contents": "Create an isolated Minecraft instance.\n[New Instance](command:minecraftWorkbench.createInstance)\n[Import Modpack](command:minecraftWorkbench.importPack)",
+        "when": "minecraftWorkbench.language != zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.instances",
+        "contents": "创建独立的 Minecraft 实例。\n[新建实例](command:minecraftWorkbench.createInstance)\n[导入整合包](command:minecraftWorkbench.importPack)",
+        "when": "minecraftWorkbench.language == zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.projects",
+        "contents": "Create a Fabric, Forge or NeoForge mod project.\n[New Mod Project](command:minecraftWorkbench.createProject)\n[Import Project](command:minecraftWorkbench.importProject)",
+        "when": "minecraftWorkbench.language != zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.projects",
+        "contents": "创建 Fabric、Forge 或 NeoForge 模组项目。\n[新建模组项目](command:minecraftWorkbench.createProject)\n[导入项目](command:minecraftWorkbench.importProject)",
+        "when": "minecraftWorkbench.language == zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.accounts",
+        "contents": "[Add Account](command:minecraftWorkbench.addAccount)",
+        "when": "minecraftWorkbench.language != zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.accounts",
+        "contents": "[添加账户](command:minecraftWorkbench.addAccount)",
+        "when": "minecraftWorkbench.language == zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.java",
+        "contents": "[Detect Local Java](command:minecraftWorkbench.detectJava)\n[Download JDK](command:minecraftWorkbench.downloadJava)",
+        "when": "minecraftWorkbench.language != zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.java",
+        "contents": "[检测本地 Java](command:minecraftWorkbench.detectJava)\n[下载 JDK](command:minecraftWorkbench.downloadJava)",
+        "when": "minecraftWorkbench.language == zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.content",
+        "contents": "Select an instance to manage its content.",
+        "when": "minecraftWorkbench.language != zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.content",
+        "contents": "选择实例以管理内容。",
+        "when": "minecraftWorkbench.language == zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.downloads",
+        "contents": "Installation and download tasks appear here.",
+        "when": "minecraftWorkbench.language != zh-cn"
+      },
+      {
+        "view": "minecraftWorkbench.downloads",
+        "contents": "安装和下载任务显示在此处。",
+        "when": "minecraftWorkbench.language == zh-cn"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "minecraftWorkbench.mode",
+          "when": "view == minecraftWorkbench.home && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.mode.zh",
+          "when": "view == minecraftWorkbench.home && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.createInstance",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.createInstance.zh",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.refresh",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.refresh.zh",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.createProject",
+          "when": "view == minecraftWorkbench.projects && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.createProject.zh",
+          "when": "view == minecraftWorkbench.projects && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.addAccount",
+          "when": "view == minecraftWorkbench.accounts && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.addAccount.zh",
+          "when": "view == minecraftWorkbench.accounts && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.detectJava",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.detectJava.zh",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.downloadJava",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.downloadJava.zh",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.output",
+          "when": "view == minecraftWorkbench.downloads && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.output.zh",
+          "when": "view == minecraftWorkbench.downloads && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.importPack",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.importPack.zh",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.refreshManifest",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.refreshManifest.zh",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.importProject",
+          "when": "view == minecraftWorkbench.projects && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.importProject.zh",
+          "when": "view == minecraftWorkbench.projects && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.addJava",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.addJava.zh",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.checkUpdates",
+          "when": "view == minecraftWorkbench.content && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.checkUpdates.zh",
+          "when": "view == minecraftWorkbench.content && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.conflicts",
+          "when": "view == minecraftWorkbench.content && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.conflicts.zh",
+          "when": "view == minecraftWorkbench.content && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.help",
+          "when": "view == minecraftWorkbench.home && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.help.zh",
+          "when": "view == minecraftWorkbench.home && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.openStorage",
+          "when": "view == minecraftWorkbench.home && minecraftWorkbench.language != zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.openStorage.zh",
+          "when": "view == minecraftWorkbench.home && minecraftWorkbench.language == zh-cn",
+          "group": "tools"
+        },
+        {
+          "command": "minecraftWorkbench.browse",
+          "when": "view == minecraftWorkbench.content && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.browse.zh",
+          "when": "view == minecraftWorkbench.content && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageInstances",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageInstances.zh",
+          "when": "view == minecraftWorkbench.instances && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageAccounts",
+          "when": "view == minecraftWorkbench.accounts && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageAccounts.zh",
+          "when": "view == minecraftWorkbench.accounts && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageJava",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageJava.zh",
+          "when": "view == minecraftWorkbench.java && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageTasks",
+          "when": "view == minecraftWorkbench.downloads && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageTasks.zh",
+          "when": "view == minecraftWorkbench.downloads && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageProjects",
+          "when": "view == minecraftWorkbench.projects && minecraftWorkbench.language != zh-cn",
+          "group": "navigation"
+        },
+        {
+          "command": "minecraftWorkbench.manageProjects.zh",
+          "when": "view == minecraftWorkbench.projects && minecraftWorkbench.language == zh-cn",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "minecraftWorkbench.launch",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.launch.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.install",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.install.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.configureInstance",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.configureInstance.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.backups",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.backups.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.openInstance",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.openInstance.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.exportInstance",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.exportInstance.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.deleteInstance",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.deleteInstance.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.stop",
+          "when": "viewItem == runningInstance && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.stop.zh",
+          "when": "viewItem == runningInstance && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.gameLog",
+          "when": "viewItem == runningInstance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.gameLog.zh",
+          "when": "viewItem == runningInstance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.removeAccount",
+          "when": "viewItem == account && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.removeAccount.zh",
+          "when": "viewItem == account && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.projectActions",
+          "when": "viewItem == project && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.projectActions.zh",
+          "when": "viewItem == project && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.contentActions",
+          "when": "viewItem == contentItem && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.contentActions.zh",
+          "when": "viewItem == contentItem && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.jobActions",
+          "when": "viewItem == runningJob && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.jobActions.zh",
+          "when": "viewItem == runningJob && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.jobActions",
+          "when": "viewItem == job && minecraftWorkbench.language != zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.jobActions.zh",
+          "when": "viewItem == job && minecraftWorkbench.language == zh-cn",
+          "group": "inline"
+        },
+        {
+          "command": "minecraftWorkbench.cloneInstance",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.cloneInstance.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.exportPack",
+          "when": "viewItem == instance && minecraftWorkbench.language != zh-cn",
+          "group": "manage"
+        },
+        {
+          "command": "minecraftWorkbench.exportPack.zh",
+          "when": "viewItem == instance && minecraftWorkbench.language == zh-cn",
+          "group": "manage"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "minecraftWorkbench.mode",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.mode.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.createInstance",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.createInstance.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.selectInstance",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.selectInstance.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.launch",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.launch.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.stop",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.stop.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.install",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.install.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.configureInstance",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.configureInstance.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.deleteInstance",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.deleteInstance.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.openInstance",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.openInstance.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.gameLog",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.gameLog.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.exportInstance",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.exportInstance.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.addAccount",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.addAccount.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.selectAccount",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.selectAccount.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.removeAccount",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.removeAccount.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.detectJava",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.detectJava.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.addJava",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.addJava.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.downloadJava",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.downloadJava.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.javaActions",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.javaActions.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.search",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.search.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.importPack",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.importPack.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.contentActions",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.contentActions.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.checkUpdates",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.checkUpdates.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.conflicts",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.conflicts.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.backups",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.backups.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.createProject",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.createProject.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.importProject",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.importProject.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.projectActions",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.projectActions.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.jobActions",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.jobActions.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.refreshManifest",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.refreshManifest.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.refresh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.refresh.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.settings",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.settings.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.output",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.output.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.openStorage",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.openStorage.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.proxyCredentials",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.proxyCredentials.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.help",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.help.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.browse",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.browse.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.installed",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.installed.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.inspectInstance",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.inspectInstance.zh",
+          "when": "false"
+        },
+        {
+          "command": "minecraftWorkbench.language",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.language.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.cloneInstance",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.cloneInstance.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.exportPack",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.exportPack.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.importContent",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.importContent.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageInstances",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageInstances.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageAccounts",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageAccounts.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageJava",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageJava.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageTasks",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageTasks.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageProjects",
+          "when": "minecraftWorkbench.language != zh-cn"
+        },
+        {
+          "command": "minecraftWorkbench.manageProjects.zh",
+          "when": "minecraftWorkbench.language == zh-cn"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "%group.general%",
+        "order": 0,
+        "properties": {
+          "minecraftWorkbench.language": {
+            "type": "string",
+            "default": "en",
+            "markdownDescription": "%setting.language%",
+            "enum": [
+              "en",
+              "zh-cn",
+              "auto"
+            ]
+          },
+          "minecraftWorkbench.storageDirectory": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%setting.storageDirectory%",
+            "scope": "machine"
+          },
+          "minecraftWorkbench.gameDirectory": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%setting.gameDirectory%",
+            "scope": "machine"
+          },
+          "minecraftWorkbench.projectDirectory": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%setting.projectDirectory%",
+            "scope": "machine"
+          },
+          "minecraftWorkbench.autoOpenProject": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%setting.autoOpenProject%"
+          },
+          "minecraftWorkbench.openProjectsInNewWindow": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%setting.openProjectsInNewWindow%"
+          }
+        }
+      },
+      {
+        "title": "%group.launch%",
+        "order": 1,
+        "properties": {
+          "minecraftWorkbench.javaPath": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%setting.javaPath%",
+            "scope": "machine"
+          },
+          "minecraftWorkbench.minMemory": {
+            "type": "number",
+            "default": 0,
+            "markdownDescription": "%setting.minMemory%",
+            "minimum": 0,
+            "maximum": 1048576
+          },
+          "minecraftWorkbench.maxMemory": {
+            "type": "number",
+            "default": 0,
+            "markdownDescription": "%setting.maxMemory%",
+            "minimum": 0,
+            "maximum": 1048576
+          },
+          "minecraftWorkbench.memoryPercentage": {
+            "type": "number",
+            "default": 25,
+            "minimum": 10,
+            "maximum": 50,
+            "markdownDescription": "%setting.memoryPercentage%"
+          },
+          "minecraftWorkbench.gc": {
+            "type": "string",
+            "default": "default",
+            "markdownDescription": "%setting.gc%",
+            "enum": [
+              "default",
+              "g1",
+              "zgc"
+            ]
+          },
+          "minecraftWorkbench.jvmArgs": {
+            "type": "array",
+            "default": [],
+            "markdownDescription": "%setting.jvmArgs%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minecraftWorkbench.gameArgs": {
+            "type": "array",
+            "default": [],
+            "markdownDescription": "%setting.gameArgs%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minecraftWorkbench.windowWidth": {
+            "type": "number",
+            "default": 1280,
+            "markdownDescription": "%setting.windowWidth%",
+            "minimum": 320,
+            "maximum": 16384
+          },
+          "minecraftWorkbench.windowHeight": {
+            "type": "number",
+            "default": 720,
+            "markdownDescription": "%setting.windowHeight%",
+            "minimum": 320,
+            "maximum": 16384
+          },
+          "minecraftWorkbench.fullscreen": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%setting.fullscreen%"
+          },
+          "minecraftWorkbench.showOutputOnLaunch": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%setting.showOutputOnLaunch%"
+          },
+          "minecraftWorkbench.checkConflictsBeforeLaunch": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%setting.checkConflictsBeforeLaunch%"
+          },
+          "minecraftWorkbench.debugPort": {
+            "type": "number",
+            "default": 5005,
+            "markdownDescription": "%setting.debugPort%",
+            "minimum": 1024,
+            "maximum": 65535
+          }
+        }
+      },
+      {
+        "title": "%group.content%",
+        "order": 2,
+        "properties": {
+          "minecraftWorkbench.modrinthSort": {
+            "type": "string",
+            "default": "downloads",
+            "markdownDescription": "%setting.modrinthSort%",
+            "enum": [
+              "downloads",
+              "relevance",
+              "follows",
+              "updated",
+              "newest"
+            ]
+          },
+          "minecraftWorkbench.modrinthPageSize": {
+            "type": "number",
+            "default": 20,
+            "markdownDescription": "%setting.modrinthPageSize%",
+            "minimum": 10,
+            "maximum": 100
+          },
+          "minecraftWorkbench.compatibleContentOnly": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%setting.compatibleContentOnly%"
+          },
+          "minecraftWorkbench.contentReleaseChannel": {
+            "type": "string",
+            "default": "release",
+            "markdownDescription": "%setting.contentReleaseChannel%",
+            "enum": [
+              "release",
+              "beta",
+              "all"
+            ]
+          },
+          "minecraftWorkbench.installOptionalDependencies": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%setting.installOptionalDependencies%"
+          },
+          "minecraftWorkbench.showProjectIcons": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%setting.showProjectIcons%"
+          },
+          "minecraftWorkbench.contentDensity": {
+            "type": "string",
+            "default": "comfortable",
+            "markdownDescription": "%setting.contentDensity%",
+            "enum": [
+              "comfortable",
+              "compact"
+            ]
+          }
+        }
+      },
+      {
+        "title": "%group.network%",
+        "order": 3,
+        "properties": {
+          "minecraftWorkbench.microsoftClientId": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%setting.microsoftClientId%",
+            "scope": "machine"
+          },
+          "minecraftWorkbench.proxy": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%setting.proxy%",
+            "scope": "machine",
+            "pattern": "^(|https?://.+|socks5?h?://.+)$"
+          },
+          "minecraftWorkbench.sources": {
+            "type": "object",
+            "default": {},
+            "markdownDescription": "%setting.sources%",
+            "additionalProperties": false,
+            "properties": {
+              "manifest": {
+                "type": "string",
+                "default": "official"
+              },
+              "client": {
+                "type": "string",
+                "default": "official"
+              },
+              "assets": {
+                "type": "string",
+                "default": "official"
+              },
+              "libraries": {
+                "type": "string",
+                "default": "official"
+              },
+              "loader": {
+                "type": "string",
+                "default": "official"
+              },
+              "modrinth": {
+                "type": "string",
+                "default": "official"
+              },
+              "java": {
+                "type": "string",
+                "default": "official"
+              },
+              "project": {
+                "type": "string",
+                "default": "official"
+              }
+            }
+          },
+          "minecraftWorkbench.downloadConcurrency": {
+            "type": "number",
+            "default": 6,
+            "markdownDescription": "%setting.downloadConcurrency%",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "minecraftWorkbench.downloadRetries": {
+            "type": "number",
+            "default": 2,
+            "markdownDescription": "%setting.downloadRetries%",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "minecraftWorkbench.networkTimeout": {
+            "type": "number",
+            "default": 30000,
+            "markdownDescription": "%setting.networkTimeout%",
+            "minimum": 5000,
+            "maximum": 180000
+          },
+          "minecraftWorkbench.showSnapshots": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%setting.showSnapshots%",
+            "deprecationMessage": "%setting.showSnapshots.deprecated%"
+          },
+          "minecraftWorkbench.autoUpdateManifest": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%setting.autoUpdateManifest%"
+          }
+        }
+      },
+      {
+        "title": "%group.backups%",
+        "order": 4,
+        "properties": {
+          "minecraftWorkbench.backupBeforeLaunch": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%setting.backupBeforeLaunch%"
+          },
+          "minecraftWorkbench.backupRetention": {
+            "type": "number",
+            "default": 0,
+            "markdownDescription": "%setting.backupRetention%",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        }
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "minecraftWorkbench",
+        "required": [
+          "project",
+          "action"
+        ],
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          }
+        }
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lopleec/VSCode-minecraft-workbench.git"
+  },
+  "homepage": "https://github.com/lopleec/VSCode-minecraft-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/lopleec/VSCode-minecraft-workbench/issues"
+  }
+}

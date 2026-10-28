@@ -1,0 +1,139 @@
+# Minecraft Workbench
+
+[English](README.md) · [双语 README](README.md)
+
+## 简体中文
+
+在 VS Code 中启动 Minecraft Java 版、管理实例并开发模组。使用原生侧栏、命令、设置、任务和输出窗口；编辑器页面适配深色、浅色与高对比主题。默认英文，可手动切换简体中文或跟随 VS Code。
+
+### 安装与开始使用
+
+需要桌面版 **VS Code 1.103+**，仅支持 **Minecraft Java 版**。游戏所需 Java 可在插件中检测、手动添加或下载；开发模组需要 JDK。首次下载需要网络，完整安装后可使用离线账户启动，无需重新获取版本清单。
+
+可从成功的 [CI 运行](https://github.com/lopleec/VSCode-minecraft-workbench/actions/workflows/ci.yml) 中下载 **Artifacts → minecraft-workbench-vsix** 并解压。也可使用 **Node.js 22.14+** 从源码打包：
+
+```sh
+git clone https://github.com/lopleec/VSCode-minecraft-workbench.git
+cd VSCode-minecraft-workbench
+npm ci
+npm run package
+```
+
+在 VS Code 中执行 **扩展：从 VSIX 安装…**，选择生成的 `.vsix`，然后打开活动栏中的 **Minecraft**。下载和启动进程需要受信任的工作区。SSH、WSL、容器中的文件和进程位于扩展宿主机器；在远程机器运行游戏需要图形环境。
+
+### 启动模式
+
+1. 打开 **实例 → 新建实例**，填写名称，选择游戏版本、加载器和父目录。
+2. 在 **管理 → 账户** 添加离线账户，或按下文配置 Microsoft 登录。
+3. 在 **管理 → Java** 检测、添加 Java 或下载 Eclipse Temurin JDK。
+4. 选择 **安装 / 修复**，完成后启动。也可先保存实例，稍后安装。
+
+版本列表包含 Mojang 清单中的正式版、快照与预发布版、愚人节版本、旧 Beta 和旧 Alpha。支持对应游戏版本可用的 Vanilla、Fabric、Quilt、Forge、NeoForge，以及 Loader 测试版本。创建后可以更改游戏版本、更新或重装 Loader，失败后可修复重试。
+
+| 功能 | 支持内容 |
+| --- | --- |
+| 实例 | 独立游戏目录、版本切换、修复、复制（可选存档）、移动目录、上次启动与游戏时长 |
+| 启动 | 独立账户与 Java、内存、GC、JVM / 游戏参数、窗口尺寸、全屏、自动加入服务器 |
+| 内容 | Modrinth 模组、整合包、资源包、光影；导入本地 JAR/ZIP；启用、禁用、删除、更新 |
+| 存档 | 完整 `saves` 备份与恢复、可选启动前备份、保留数量 |
+| 下载 | 进度、取消、重试、断点续传、哈希校验、镜像与代理 |
+| 账户与 Java | 多离线 / Microsoft 账户切换、本地 Java 检测、Temurin 下载 |
+
+### 内容浏览与依赖
+
+从 **内容 → 浏览内容** 打开页面。发现页默认按下载量展示项目图标、简介和下载数，也可搜索或按相关度、关注数、更新与发布时间排序。选择实例后，可按游戏版本和 Loader 筛选兼容内容。
+
+**版本** 支持游戏版本、Loader 和发布类型筛选；**查看全部版本** 会显示不兼容版本，但不能将它们安装进当前实例。选定版本后先查看依赖计划，再安装。必需前置递归解析，可选依赖可单独勾选。
+
+Fabric / Quilt 会读取 `fabric.mod.json`、内嵌模块、版本范围和声明的不兼容项；Forge / NeoForge 使用 Modrinth 声明及游戏、Loader 兼容性信息。冲突检查可发现声明的依赖问题、重复 Fabric ID、损坏文件，不能预测所有运行时或 Mixin 冲突。
+
+**已安装** 页面支持筛选、导入本地文件、启用、禁用、删除和更新。更新保留禁用状态，旧文件存放在 `.workbench/history`。光影包需配合 Iris、Oculus 等兼容模组。
+
+支持从本地或 Modrinth 导入 `.mrpack`，新建实例并应用公共及客户端覆盖文件，跳过仅服务端和客户端可选文件。导出包含已启用内容与配置：已识别文件使用下载引用，本地文件作为覆盖文件。排除存档、日志、服务器列表和账户元数据。**暂不支持 CurseForge 整合包。**
+
+### 内存、语言与实例设置
+
+内存在**创建后的实例设置**或全局设置中调整。默认最小、最大内存为 `0`（自动）：最大值取**系统内存的 25%**，向下取整到 128 MB，上限 8 GiB；最小值随之调整，通常为 256–1024 MB。可修改全局百分比，或取消 **使用全局内存设置**，为实例单独填写。手动值优先。
+
+![浅色主题下的中文实例设置](docs/images/settings-zh-light.png)
+
+通过 **切换语言**、侧栏语言入口或 **EN / 中** 按钮即时切换。语言可独立于 VS Code 设置。
+
+修改内容、版本或恢复存档前需停止实例。恢复前自动备份当前存档。删除实例会将整个游戏目录移至系统废纸篓（系统支持时）。
+
+### 账户与 Microsoft 登录
+
+**插件不内置 Microsoft Client ID**；留空时使用离线账户。离线身份无法通过要求 Microsoft / Minecraft 验证的服务器认证。
+
+正版登录需在 **管理 → 账户** 或 `minecraftWorkbench.microsoftClientId` 中填写自己的公共客户端应用 ID。应用必须支持设备代码流程、个人 Microsoft 账户、Xbox 登录并获得 Minecraft Services 访问许可；仅创建应用 ID 不保证获得 Minecraft Services 许可。不需要也不会收集客户端密钥。
+
+通过 Microsoft 设备登录页面授权。刷新令牌和 Minecraft 访问令牌存于 **VS Code SecretStorage**，到期前及启动前自动刷新；刷新失败需重新登录。移除账户会删除保存的凭据，账户名和 UUID 作为本地元数据保存。插件不收集遥测。
+
+### 开发模式
+
+在侧栏或状态栏切换模式，打开 **管理 → 项目**。
+
+1. 选择 **Fabric / Forge / NeoForge** 和官方模板或 MDK 版本。
+2. 填写模组名称、ID、Java 包名和目录。包名建议使用通用的 `com.example.<mod_id>`，可自行修改。
+3. 创建后自动打开项目，也可关闭该选项；支持导入包含 Gradle wrapper 的已有项目。
+4. 项目操作支持构建、清理、启动客户端、生成源码 / IDE 文件和查看构建产物。
+5. 调试时先选择 **启动客户端并等待调试**，待 Gradle 监听端口后 **附加调试器**。按提示安装 **Debugger for Java**，默认端口 5005。
+
+Gradle 通过项目 wrapper 在 VS Code Tasks 中运行，首次会下载 Gradle 与依赖。模板提供对应的游戏、Loader 和 Gradle 版本，部分历史版本没有维护中的模板。生成的是模组项目，并非反编译后的独立游戏客户端。插件代理用于插件管理的下载；Gradle 的仓库与代理遵循项目及 Gradle 配置。
+
+### 网络、目录与诊断
+
+全局选项位于 **Minecraft Workbench：设置** 的原生分组中。
+
+```json
+{
+  "minecraftWorkbench.language": "zh-cn",
+  "minecraftWorkbench.minMemory": 0,
+  "minecraftWorkbench.maxMemory": 0,
+  "minecraftWorkbench.memoryPercentage": 25,
+  "minecraftWorkbench.sources": {
+    "manifest": "official",
+    "assets": "bmclapi",
+    "libraries": "bmclapi"
+  }
+}
+```
+
+- **下载源：** 可按 `manifest`、`client`、`assets`、`libraries`、`loader`、`modrinth`、`java`、`project` 设置 `official`、`bmclapi` 或 HTTPS 基地址。自定义地址保留原路径和查询参数；BMCLAPI 仅用于支持的端点。镜像失败回退原始地址，认证始终走官方端点。
+- **代理：** 支持 HTTP、HTTPS、SOCKS5、SOCKS5h；SOCKS5 本地解析域名，SOCKS5h 由代理解析。留空时沿用 VS Code `http.proxy`。使用 **设置代理凭据** 将凭据存入 SecretStorage。修改网络、存储配置后需重载窗口。
+- **断点与校验：** 保留 `.part`，在服务器支持时使用 HTTP Range 和校验器续传；服务器忽略范围则重新下载。校验 Minecraft / Modrinth 公布的哈希及 JDK SHA-256。
+- **目录：** 存储、游戏和项目目录可配置。游戏目录中的 `.runtime` 保存运行依赖，`.workbench` 保存元数据、历史和备份，移动实例时应一起保留。
+- **日志：** 使用 **显示输出** 或 **打开游戏日志**。插件输出会隐藏认证令牌和代理凭据；分享外部游戏或模组日志前仍需检查内容。
+
+### 开发与验证
+
+```sh
+npm ci
+npm test
+npm run format:check
+npm run compile
+npm run test:host
+npm run package
+```
+
+按 **F5** 打开扩展开发宿主。单元测试覆盖路径安全、状态保存及失败恢复、账户、续传、哈希、依赖、备份和项目定制。CI 在 Linux、Windows 和 macOS 检查格式、测试、编译和打包。
+
+宿主测试需要网络与本地或可下载的 VS Code。`VSCODE_EXECUTABLE` 可指定本地程序，`MW_LIVE_INSTALL=1` 会额外下载安装 Fabric 测试实例。Microsoft 登录需要获批应用和账户，不自动测试。游戏启动和 Gradle 构建已在 macOS Apple Silicon 验证，其他平台及所有历史游戏 / Loader 组合尚未逐一人工验证。
+
+截图来自 VS Code 中运行的插件，使用示例实例和实时 Modrinth 元数据。项目图标、简介属于各自作者。
+
+### 许可与致谢
+
+[MIT License](LICENSE)，Copyright © 2026 Lopleec。依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和 [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)。
+
+使用 VS Code API、XMCL、Modrinth API，以及 Fabric、Forge、NeoForge 官方模板。本项目独立于 Mojang、Microsoft、Modrinth 和各 Loader 项目。游戏文件、账户与下载内容仍适用各自条款和许可。
+
+### 界面示例
+
+![VS Code 中的 Modrinth 内容浏览](docs/images/discover-dark.png)
+
+![包含愚人节版本的实例安装页面](docs/images/install-dark.png)
+
+![版本选择与依赖安装预览](docs/images/dependencies-dark.png)
+
+![官方 Fabric 模板项目创建](docs/images/projects-dark.png)
