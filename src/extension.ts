@@ -14,6 +14,7 @@ import { UI } from './ui';
 import { config, t } from './config';
 import { exists } from './files';
 import { Workbench } from './workbench';
+import { Consent } from './consent';
 
 export async function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Minecraft Workbench', { log: true });
@@ -24,14 +25,28 @@ export async function activate(context: vscode.ExtensionContext) {
   const refresh = () => {
     for (const view of views) view.refresh();
     updateStatus(status, store);
+    if (!consent.accepted) {
+      status.text = '$(shield) ' + t('Agreements required', '请先确认协议');
+      status.command = 'minecraftWorkbench.agreements';
+      status.tooltip = t(
+        'Review the agreements to use Minecraft Workbench.',
+        '确认协议后使用 Minecraft Workbench。',
+      );
+    }
     workbench?.refresh();
     void vscode.commands.executeCommand('setContext', 'minecraftWorkbench.mode', store.state.mode);
+    void vscode.commands.executeCommand(
+      'setContext',
+      'minecraftWorkbench.agreementsAccepted',
+      consent.accepted,
+    );
     void vscode.commands.executeCommand(
       'setContext',
       'minecraftWorkbench.language',
       t('en', 'zh-cn'),
     );
   };
+  const consent = new Consent(context.globalState, refresh);
   const root = config('storageDirectory', '') || context.globalStorageUri.fsPath;
   if (!path.isAbsolute(root)) {
     void vscode.window.showErrorMessage(
@@ -78,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
   const jobs = new Jobs(refresh, output);
   const java = new Java(store, network);
-  const accounts = new Accounts(store, context.secrets, network);
+  const accounts = new Accounts(store, context.secrets, network, () => consent.accepted);
   const minecraft = new Minecraft(store, network, java, accounts, jobs, refresh);
   const content = new ContentService(network, path.join(store.root, 'cache', 'mod-metadata'));
   const developer = new Developer(store, network, java);
@@ -94,7 +109,7 @@ export async function activate(context: vscode.ExtensionContext) {
     refresh,
   );
   context.subscriptions.push(jobs, accounts);
-  workbench = new Workbench(context, store, content, minecraft, ui);
+  workbench = new Workbench(context, store, content, minecraft, ui, consent);
   ui.browser = (page, kind) => workbench!.open(page, kind);
   context.subscriptions.push(workbench);
   const titles: Record<Section, [string, string]> = {
@@ -108,7 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
   };
   const treeViews: { section: Section; tree: vscode.TreeView<Item> }[] = [];
   for (const section of Object.keys(titles) as Section[]) {
-    const provider = new View(section, store, minecraft, content, jobs);
+    const provider = new View(section, store, minecraft, content, jobs, () => consent.accepted);
     const tree = vscode.window.createTreeView(`minecraftWorkbench.${section}`, {
       treeDataProvider: provider,
       showCollapseAll: section === 'instances' || section === 'content',
@@ -119,6 +134,7 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(provider, tree);
   }
   const commands: Record<string, (item?: Item) => Promise<unknown> | unknown> = {
+    agreements: () => workbench!.open('agreements'),
     mode: () => ui.mode(),
     createInstance: () => ui.createInstance(),
     selectInstance: (item) => ui.selectInstance(item),
@@ -204,7 +220,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await vscode.commands.executeCommand('workbench.action.reloadWindow');
     },
     help: async () => {
-      const language = config<string>('language', 'en');
+      const language = config<string>('language', 'auto');
       const zh =
         language === 'zh-cn' || (language === 'auto' && vscode.env.language.startsWith('zh'));
       const name = zh
@@ -223,6 +239,10 @@ export async function activate(context: vscode.ExtensionContext) {
       context.subscriptions.push(
         vscode.commands.registerCommand(`minecraftWorkbench.${name}${suffix}`, (item?: Item) =>
           ui.guard(async () => {
+            if (!consent.allowsCommand(name)) {
+              await workbench!.open('agreements');
+              return;
+            }
             await command(item);
           }),
         ),
@@ -259,11 +279,12 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
   );
   const timer = setInterval(() => {
-    if (store.state.instances.length && config('autoUpdateManifest', true))
+    if (consent.accepted && store.state.instances.length && config('autoUpdateManifest', true))
       void minecraft.manifest().catch((error) => output.warn(String(error)));
   }, 3600000);
   context.subscriptions.push({ dispose: () => clearInterval(timer) });
   refresh();
-  return { store, minecraft, content, java, developer, network, accounts, ui, workbench };
+  if (!consent.accepted) await workbench.open('agreements');
+  return { store, minecraft, content, java, developer, network, accounts, ui, workbench, consent };
 }
 export function deactivate() {}

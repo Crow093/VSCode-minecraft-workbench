@@ -4,6 +4,10 @@ const original = Module._load;
 const stub = {
   workspace: { getConfiguration: () => ({ get: (_key, fallback) => fallback }), isTrusted: true },
   env: { language: 'en' },
+  ConfigurationTarget: { Global: 1, Workspace: 2 },
+  TreeItem: class {},
+  TreeItemCollapsibleState: { None: 0, Collapsed: 1 },
+  ThemeIcon: class {},
 };
 Module._load = function (id, ...args) {
   if (id === 'vscode') return stub;

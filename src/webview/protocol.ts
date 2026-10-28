@@ -1,3 +1,4 @@
+import type { ConsentStatus } from '../consent';
 import type {
   Account,
   Content,
@@ -10,6 +11,7 @@ import type {
 import type { ModProject, ProjectKind, SearchOrder, InstallPlan } from '../modrinth';
 
 export const workbenchPages = [
+  'agreements',
   'discover',
   'installed',
   'instance',
@@ -33,6 +35,7 @@ export interface Preferences {
   optional: boolean;
 }
 export interface Bootstrap {
+  consent: ConsentStatus;
   locale: 'en' | 'zh-cn';
   page: WorkbenchPage;
   kind: ProjectKind;

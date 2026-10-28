@@ -14,8 +14,10 @@ export class Accounts implements vscode.Disposable {
     private readonly store: Store,
     private readonly secrets: vscode.SecretStorage,
     private readonly net: Network,
+    private readonly canRefresh: () => boolean = () => true,
   ) {
     this.timer = setInterval(() => {
+      if (!this.canRefresh()) return;
       for (const account of store.state.accounts.filter((a) => a.kind === 'microsoft')) {
         void this.token(account).catch(() => {});
       }

@@ -12,7 +12,7 @@ import { Developer } from './developer';
 import { Backups } from './backups';
 import { Item } from './views';
 import { Instance, Content, ContentKind, Account } from './models';
-import { config, t, trusted } from './config';
+import { config, t, trusted, setLanguage } from './config';
 import { exists, writeJson } from './files';
 import { describeError } from './errors';
 import { InstanceFiles } from './instance-files';
@@ -190,24 +190,15 @@ export class UI {
   async language() {
     const result = await choose(
       [
+        { label: 'Follow VS Code / 跟随 VS Code', value: 'auto', description: '' },
         { label: 'English', value: 'en', description: 'English' },
         { label: '简体中文', value: 'zh-cn', description: 'Simplified Chinese' },
-        { label: 'Follow VS Code / 跟随 VS Code', value: 'auto', description: '' },
       ],
       'Language / 语言',
     );
-    await vscode.workspace
-      .getConfiguration('minecraftWorkbench')
-      .update('language', result.value, vscode.ConfigurationTarget.Global);
-    if (
-      vscode.workspace.getConfiguration('minecraftWorkbench').inspect('language')
-        ?.workspaceValue !== undefined
-    ) {
-      await vscode.workspace
-        .getConfiguration('minecraftWorkbench')
-        .update('language', undefined, vscode.ConfigurationTarget.Workspace);
-    }
+    await setLanguage(result.value);
   }
+
   async saveInstance(instance: Instance, value: unknown) {
     this.idle(instance);
     Object.assign(instance, validateInstanceSettings(value, this.store.state.accounts));

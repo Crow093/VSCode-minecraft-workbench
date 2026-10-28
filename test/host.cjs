@@ -7,6 +7,21 @@ exports.run = async function () {
   assert.ok(extension, 'Extension is installed in the development host');
   const api = await extension.activate();
   assert.ok(api?.store, 'Extension activates successfully');
+  if (!api.consent.accepted) {
+    assert.equal(api.workbench.snapshot().page, 'agreements');
+    await assert.rejects(
+      api.workbench.handle('launcher.gameVersions', {}),
+      /Accept the agreements/,
+    );
+    await vscode.commands.executeCommand('minecraftWorkbench.launch');
+    assert.equal(api.workbench.snapshot().page, 'agreements');
+  }
+  await api.workbench.handle('consent.accept', {
+    version: api.consent.snapshot().version,
+    minecraftEula: true,
+    workbenchTerms: true,
+  });
+  assert.equal(api.consent.accepted, true);
   const commands = await vscode.commands.getCommands(true);
   for (const command of extension.packageJSON.contributes.commands)
     assert.ok(commands.includes(command.command), command.command);

@@ -1,4 +1,5 @@
 import { h } from './dom';
+import { renderAgreements } from './agreements-page';
 import { renderInstances, renderSetup } from './setup-page';
 import { renderManagement, managementPages } from './manage-pages';
 import type { PageContext } from './page-ui';
@@ -39,6 +40,7 @@ function call<T>(method: string, params: Record<string, unknown> = {}): Promise<
 }
 let boot: Bootstrap;
 let page: WorkbenchPage = 'discover';
+let agreementLanguage: 'auto' | 'en' | 'zh-cn' = 'auto';
 let kind: ProjectKind = 'mod';
 let query = '';
 let order = 'downloads';
@@ -158,7 +160,7 @@ function date(value: string | undefined) {
     : '—';
 }
 function persist() {
-  bridge.setState({ page, kind, query, order, onlyCompatible });
+  bridge.setState({ page, kind, query, order, onlyCompatible, agreementLanguage });
 }
 function showError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
@@ -304,9 +306,37 @@ function render() {
   generation++;
   versionGeneration++;
   planGeneration++;
-  shell();
   updateManaged = undefined;
   syncMemoryControls = undefined;
+  if (!boot.consent.accepted || page === 'agreements') {
+    renderAgreements(root, {
+      locale: agreementLanguage === 'auto' ? boot.locale : agreementLanguage,
+      preference: agreementLanguage,
+      status: boot.consent,
+      request: call,
+      accept: async () => {
+        boot = await call<Bootstrap>('consent.accept', {
+          version: boot.consent.version,
+          minecraftEula: true,
+          workbenchTerms: true,
+        });
+        page = 'instances';
+        persist();
+        render();
+      },
+      back: () => {
+        page = 'instances';
+        render();
+      },
+      language: async (language) => {
+        agreementLanguage = language;
+        persist();
+        render();
+      },
+    });
+    return;
+  }
+  shell();
   if (['instances', 'create', 'version', ...managementPages].includes(page)) {
     const main = find('main');
     main.className = 'management-page';
@@ -1522,6 +1552,8 @@ window.addEventListener('message', (event: MessageEvent) => {
       JSON.stringify(next.running) !== JSON.stringify(boot.running);
     const changed =
       runningChanged ||
+      next.consent.accepted !== boot.consent.accepted ||
+      next.consent.version !== boot.consent.version ||
       next.locale !== boot.locale ||
       (['discover', 'installed', 'instance', 'backups', 'version'].includes(page) &&
         next.selectedInstance !== boot.selectedInstance) ||
@@ -1550,9 +1582,12 @@ void call<Bootstrap>('ready')
           query?: string;
           order?: string;
           onlyCompatible?: boolean;
+          agreementLanguage?: 'auto' | 'en' | 'zh-cn';
         }
       | undefined;
     if (saved) {
+      if (['auto', 'en', 'zh-cn'].includes(String(saved.agreementLanguage)))
+        agreementLanguage = saved.agreementLanguage!;
       query = saved.query || '';
       order = saved.order || value.preferences.order;
       onlyCompatible = saved.onlyCompatible ?? value.preferences.compatibleOnly;

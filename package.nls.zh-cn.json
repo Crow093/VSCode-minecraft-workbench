@@ -35,7 +35,7 @@
   "command.openStorage": "打开存储目录",
   "command.proxyCredentials": "设置代理凭据",
   "command.help": "使用文档",
-  "setting.language": "界面语言，默认使用英文。",
+  "setting.language": "插件语言，默认跟随 VS Code。也可单独选择英文或简体中文。",
   "setting.storageDirectory": "元数据、缓存和下载 JDK 的绝对路径。留空使用 VS Code 扩展存储。需要重新加载。",
   "setting.gameDirectory": "新游戏实例的父目录。留空使用扩展存储目录。",
   "setting.projectDirectory": "新模组项目的父目录。留空时选择目录。",

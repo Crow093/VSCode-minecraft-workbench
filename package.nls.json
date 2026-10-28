@@ -35,7 +35,7 @@
   "command.openStorage": "Open Storage Directory",
   "command.proxyCredentials": "Set Proxy Credentials",
   "command.help": "Documentation",
-  "setting.language": "Interface language. English is the default.",
+  "setting.language": "Extension language. By default, follows VS Code. English and Simplified Chinese can be selected independently.",
   "setting.storageDirectory": "Absolute path for metadata, caches and downloaded JDKs. Empty uses VS Code extension storage. Reload required.",
   "setting.gameDirectory": "Parent directory for new isolated game instances. Empty uses the extension storage directory.",
   "setting.projectDirectory": "Parent directory for new mod projects. Empty prompts for a folder.",

@@ -19,6 +19,8 @@ import {
 import { describeError } from './errors';
 import { LauncherActions } from './launcher-actions';
 import { memorySettings } from './memory';
+import { Consent } from './consent';
+import legal from './legal.json';
 
 const kinds: ProjectKind[] = ['mod', 'modpack', 'resourcepack', 'shader'];
 export class Workbench implements vscode.Disposable {
@@ -32,8 +34,10 @@ export class Workbench implements vscode.Disposable {
     private readonly content: ContentService,
     private readonly minecraft: Minecraft,
     private readonly ui: UI,
+    private readonly consent: Consent,
   ) {}
   async open(page: string = 'discover', kind: ProjectKind = 'mod') {
+    if (!this.consent.accepted) page = 'agreements';
     if ((workbenchPages as readonly string[]).includes(page)) this.page = page as WorkbenchPage;
     if (kinds.includes(kind)) this.kind = kind;
     if (!this.panel) {
@@ -75,6 +79,7 @@ export class Workbench implements vscode.Disposable {
   snapshot(): Bootstrap {
     const memory = memorySettings();
     return {
+      consent: this.consent.snapshot(),
       locale: t('en', 'zh-cn') as Bootstrap['locale'],
       page: this.page,
       kind: this.kind,
@@ -144,6 +149,31 @@ export class Workbench implements vscode.Disposable {
     }
   }
   async handle(method: string, params: Record<string, unknown>): Promise<unknown> {
+    if (!this.consent.allowsRequest(method, params))
+      throw new Error(
+        t(
+          'Accept the agreements before using Minecraft Workbench.',
+          '请先确认协议，再使用 Minecraft Workbench。',
+        ),
+      );
+    if (method === 'ready') return this.snapshot();
+    if (method === 'consent.accept') {
+      await this.consent.accept(params);
+      this.page = 'instances';
+      this.refresh();
+      return this.snapshot();
+    }
+    if (method === 'consent.close') {
+      this.panel?.dispose();
+      return true;
+    }
+    if (method === 'consent.link') {
+      const key = String(params.document);
+      if (!Object.hasOwn(legal.links, key)) throw new Error('Unknown agreement link');
+      return vscode.env.openExternal(
+        vscode.Uri.parse(legal.links[key as keyof typeof legal.links]),
+      );
+    }
     const kind = kinds.includes(params.kind as ProjectKind) ? (params.kind as ProjectKind) : 'mod';
     const instance = this.instance(params);
     const id = (name: string) => {
@@ -153,8 +183,6 @@ export class Workbench implements vscode.Disposable {
       return value;
     };
     switch (method) {
-      case 'ready':
-        return this.snapshot();
       case 'search': {
         this.searchAbort?.abort();
         this.searchAbort = new AbortController();

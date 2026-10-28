@@ -47,6 +47,7 @@ export class View implements vscode.TreeDataProvider<Item>, vscode.Disposable {
     private readonly minecraft: Minecraft,
     private readonly content: ContentService,
     private readonly jobs: Jobs,
+    private readonly hasConsent: () => boolean = () => true,
   ) {}
   refresh() {
     this.emitter.fire(undefined);
@@ -56,8 +57,28 @@ export class View implements vscode.TreeDataProvider<Item>, vscode.Disposable {
   }
   async getChildren(_parent?: Item): Promise<Item[]> {
     const state = this.store.state;
+    if (!this.hasConsent())
+      return this.section === 'home'
+        ? [
+            new Item(
+              t('Agreements & About', '协议与关于'),
+              'action',
+              undefined,
+              'shield',
+              'agreements',
+            ),
+            new Item(t('Language', '语言'), 'action', undefined, 'globe', 'language'),
+          ]
+        : [];
     if (this.section === 'home')
       return [
+        new Item(
+          t('Agreements & About', '协议与关于'),
+          'action',
+          undefined,
+          'shield',
+          'agreements',
+        ),
         new Item(
           state.mode === 'launcher'
             ? t('Launcher Mode', '启动模式')

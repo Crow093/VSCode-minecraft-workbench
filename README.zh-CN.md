@@ -4,7 +4,7 @@
 
 ## 简体中文
 
-在 VS Code 中启动 Minecraft Java 版、管理实例并开发模组。使用原生侧栏、命令、设置、任务和输出窗口；编辑器页面适配深色、浅色与高对比主题。默认英文，可手动切换简体中文或跟随 VS Code。
+在 VS Code 中启动 Minecraft Java 版、管理实例并开发模组。使用原生侧栏、命令、设置、任务和输出窗口；编辑器页面适配深色、浅色与高对比主题。默认跟随 VS Code 语言，也可单独手动选择英文或简体中文。
 
 ### 安装与开始使用
 
@@ -20,6 +20,18 @@ npm run package
 ```
 
 在 VS Code 中执行 **扩展：从 VSIX 安装…**，选择生成的 `.vsix`，然后打开活动栏中的 **Minecraft**。下载和启动进程需要受信任的工作区。SSH、WSL、容器中的文件和进程位于扩展宿主机器；在远程机器运行游戏需要图形环境。
+
+### 首次使用与协议
+
+首次打开会显示 **协议与关于**。阅读链接中的 [Minecraft EULA](https://www.minecraft.net/en-us/eula) 与插件的 [用户协议和声明](TERMS.md)，勾选两项后选择 **同意并继续**。两项默认均未勾选；选择 **暂不使用** 会关闭页面，插件操作保持不可用。
+
+未同意时仅开放协议阅读、语言选择、确认与关闭，其余插件命令和操作均锁定；侧栏“语言”仍可修改插件整体的语言。
+
+协议页默认跟随插件语言；手动选择只改变协议页，不修改插件、侧栏或 VS Code 的语言设置。插件整体默认跟随 VS Code。
+
+![首次使用协议确认界面](docs/images/agreements-zh.png)
+
+仅将提示版本、确认时间和两项选择保存在本地 VS Code 配置中。插件提示更新后需重新确认；此版本号不代表 Mojang EULA 版本。之后可通过侧栏或命令面板的 **协议与关于** 再次查看。此确认不为 MIT 增加限制，也不授予 Minecraft 游戏许可。
 
 ### 启动模式
 
@@ -111,6 +123,7 @@ Gradle 通过项目 wrapper 在 VS Code Tasks 中运行，首次会下载 Gradle
 npm ci
 npm test
 npm run format:check
+npm run legal -- --check
 npm run compile
 npm run test:host
 npm run package
