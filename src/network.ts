@@ -15,6 +15,7 @@ export interface NetworkOptions {
   concurrency: number;
   retries?: number;
   timeout?: number;
+  userAgent?: string;
 }
 interface JsonOptions {
   method?: 'GET' | 'POST';
@@ -34,7 +35,9 @@ export class HttpError extends Error {
 }
 export class Network {
   readonly dispatcher: Dispatcher;
+  readonly userAgent: string;
   constructor(readonly options: NetworkOptions) {
+    this.userAgent = options.userAgent?.trim() || 'MinecraftWorkbench';
     if (/^socks/.test(options.proxy)) {
       const proxy = new URL(options.proxy);
       if (!['socks:', 'socks5:', 'socks5h:'].includes(proxy.protocol))
@@ -96,7 +99,7 @@ export class Network {
         dispatcher: this.dispatcher,
         method: options.method || 'GET',
         headers: {
-          'user-agent': 'MinecraftWorkbench/0.3.1',
+          'user-agent': this.userAgent,
           ...(options.body ? { 'content-type': 'application/json' } : {}),
           ...(options.form ? { 'content-type': 'application/x-www-form-urlencoded' } : {}),
           ...options.headers,
@@ -151,7 +154,7 @@ export class Network {
           dispatcher: this.dispatcher,
           signal: options.signal,
           headers: {
-            'user-agent': 'MinecraftWorkbench/0.3.1',
+            'user-agent': this.userAgent,
             ...(offset
               ? {
                   Range: `bytes=${offset}-`,

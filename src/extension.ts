@@ -17,12 +17,14 @@ import { Workbench } from './workbench';
 import { Consent } from './consent';
 import { resolveProxy } from './proxy';
 import { describeError } from './errors';
+import { extensionVersion, userAgent } from './user-agent';
 
 const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 
 function createNetwork(proxy: string, output: vscode.LogOutputChannel): Network {
   const options = {
     proxy,
+    userAgent: userAgent(extensionVersion()),
     sources: config('sources', {}),
     concurrency: Math.max(1, Math.min(32, config('downloadConcurrency', 6))),
     retries: config('downloadRetries', 2),

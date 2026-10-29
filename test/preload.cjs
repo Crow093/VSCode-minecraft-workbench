@@ -1,9 +1,14 @@
 const Module = require('node:module');
 const path = require('node:path');
+const manifest = require('../package.json');
 const original = Module._load;
 const stub = {
   workspace: { getConfiguration: () => ({ get: (_key, fallback) => fallback }), isTrusted: true },
   env: { language: 'en' },
+  extensions: {
+    getExtension: (id) =>
+      id === `${manifest.publisher}.${manifest.name}` ? { packageJSON: manifest } : undefined,
+  },
   ConfigurationTarget: { Global: 1, Workspace: 2 },
   TreeItem: class {},
   TreeItemCollapsibleState: { None: 0, Collapsed: 1 },
