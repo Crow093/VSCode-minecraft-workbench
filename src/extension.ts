@@ -15,6 +15,26 @@ import { config, t } from './config';
 import { exists } from './files';
 import { Workbench } from './workbench';
 import { Consent } from './consent';
+import { resolveProxy } from './proxy';
+import { describeError } from './errors';
+
+const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+
+function createNetwork(proxy: string, output: vscode.LogOutputChannel): Network {
+  const options = {
+    proxy,
+    sources: config('sources', {}),
+    concurrency: Math.max(1, Math.min(32, config('downloadConcurrency', 6))),
+    retries: config('downloadRetries', 2),
+    timeout: config('networkTimeout', 30000),
+  };
+  try {
+    return new Network(options);
+  } catch (error) {
+    output.error(`Proxy disabled: ${describeError(error)}`);
+    return new Network({ ...options, proxy: '' });
+  }
+}
 
 export async function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Minecraft Workbench', { log: true });
@@ -68,24 +88,24 @@ export async function activate(context: vscode.ExtensionContext) {
     return;
   }
   context.subscriptions.push(store);
-  let proxy =
-    config('proxy', '').trim() ||
-    vscode.workspace.getConfiguration('http').get<string>('proxy', '').trim();
+  const proxySetting =
+    text(config<unknown>('proxy', '')) ||
+    text(vscode.workspace.getConfiguration('http').get<unknown>('proxy', ''));
   const credentials = await context.secrets.get('minecraftWorkbench.proxyCredentials');
-  if (proxy && credentials) {
-    const url = new URL(proxy);
-    const value = JSON.parse(credentials);
-    url.username = value.username;
-    url.password = value.password;
-    proxy = url.toString();
-  }
-  const network = new Network({
-    proxy,
-    sources: config('sources', {}),
-    concurrency: Math.max(1, Math.min(32, config('downloadConcurrency', 6))),
-    retries: config('downloadRetries', 2),
-    timeout: config('networkTimeout', 30000),
-  });
+  const resolved = resolveProxy(proxySetting, credentials);
+  if (resolved.problem)
+    void vscode.window.showWarningMessage(
+      resolved.problem === 'unsupported'
+        ? t(
+            'Ignoring the proxy setting: use an HTTP, HTTPS, SOCKS5 or SOCKS5h proxy.',
+            '已忽略代理设置：请使用 HTTP、HTTPS、SOCKS5 或 SOCKS5h 代理。',
+          )
+        : t(
+            'Ignoring the proxy setting: it is not a valid proxy URL.',
+            '已忽略代理设置：代理地址不是有效的 URL。',
+          ),
+    );
+  const network = createNetwork(resolved.proxy, output);
   context.subscriptions.push({
     dispose: () => {
       void network.close();
