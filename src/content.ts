@@ -682,12 +682,14 @@ export class ContentService {
   async conflicts(instance: Instance): Promise<string[]> {
     const items = (await this.list(instance)).filter((i) => i.enabled && i.kind === 'mod');
     const warnings: string[] = [];
+    const localWarnings = new Map<string, string[]>();
     const localModules: FabricModule[] = [];
-    let remoteUnavailable = false;
     const ids = new Map<string, string>();
     for (const item of items) {
+      const found: string[] = [];
+      localWarnings.set(item.file, found);
       if (instance.loader === 'vanilla')
-        warnings.push(`${item.name}: ${t('requires a mod loader', '需要模组加载器')}`);
+        found.push(`${item.name}: ${t('requires a mod loader', '需要模组加载器')}`);
       try {
         const zip = new AdmZip(path.join(instance.directory, 'mods', item.file));
         const fabric = zip.getEntry('fabric.mod.json');
@@ -696,51 +698,73 @@ export class ContentService {
             ...readFabricMetadata(path.join(instance.directory, 'mods', item.file)),
           );
           const meta = JSON.parse(fabric.getData().toString());
-          if (ids.has(meta.id)) warnings.push(`${meta.id}: ${ids.get(meta.id)} / ${item.file}`);
+          if (ids.has(meta.id)) found.push(`${meta.id}: ${ids.get(meta.id)} / ${item.file}`);
           ids.set(meta.id, item.file);
           if (!['fabric', 'quilt'].includes(instance.loader))
-            warnings.push(`${item.name}: Fabric / Quilt ${t('required', '必需')}`);
+            found.push(`${item.name}: Fabric / Quilt ${t('required', '必需')}`);
         }
       } catch {
-        warnings.push(`${item.file}: ${t('unreadable mod archive', '无法读取模组文件')}`);
-      }
-      if (item.versionId && !remoteUnavailable) {
-        try {
-          const version = await this.net.json<ModVersion>(`${api}/version/${item.versionId}`);
-          if (
-            !version.game_versions.includes(instance.minecraft) ||
-            !version.loaders.includes(instance.loader)
-          )
-            warnings.push(`${item.name}: ${t('version or loader mismatch', '版本或加载器不匹配')}`);
-          for (const dep of version.dependencies) {
-            const found = items.some((i) =>
-              dep.project_id
-                ? i.projectId === dep.project_id &&
-                  (!dep.version_id || i.versionId === dep.version_id)
-                : i.versionId === dep.version_id,
-            );
-            if (
-              (dep.dependency_type === 'required' && !found) ||
-              (dep.dependency_type === 'incompatible' && found)
-            )
-              warnings.push(
-                `${item.name}: ${dep.dependency_type} ${dep.project_id || dep.version_id}`,
-              );
-          }
-        } catch (error) {
-          if (error instanceof HttpError) warnings.push(`${item.name}: HTTP ${error.status}`);
-          else {
-            remoteUnavailable = true;
-            warnings.push(
-              t(
-                'Online metadata unavailable; local checks only.',
-                '在线元数据不可用，仅完成本地检查。',
-              ),
-            );
-          }
-        }
+        found.push(`${item.file}: ${t('unreadable mod archive', '无法读取模组文件')}`);
       }
     }
+    const remote: ({ item: Content; version: ModVersion } | { item: Content; error: unknown })[] =
+      await Promise.all(
+        items
+          .filter((item) => item.versionId)
+          .map(async (item) => {
+            try {
+              return { item, version: await this.version(item.versionId!) };
+            } catch (error) {
+              return { item, error };
+            }
+          }),
+      );
+    let remoteUnavailable = false;
+    const remoteWarnings = new Map<string, string[]>();
+    for (const result of remote) {
+      const item = result.item;
+      const found: string[] = [];
+      remoteWarnings.set(item.file, found);
+      if ('error' in result) {
+        if (result.error instanceof HttpError)
+          found.push(`${item.name}: HTTP ${result.error.status}`);
+        else if (!remoteUnavailable) {
+          remoteUnavailable = true;
+          found.push(
+            t(
+              'Online metadata unavailable; local checks only.',
+              '在线元数据不可用，仅完成本地检查。',
+            ),
+          );
+        }
+        continue;
+      }
+      const version = result.version;
+      if (
+        !version.game_versions.includes(instance.minecraft) ||
+        !version.loaders.includes(instance.loader)
+      )
+        found.push(`${item.name}: ${t('version or loader mismatch', '版本或加载器不匹配')}`);
+      for (const dep of version.dependencies) {
+        const installed = items.some((i) =>
+          dep.project_id
+            ? i.projectId === dep.project_id && (!dep.version_id || i.versionId === dep.version_id)
+            : i.versionId === dep.version_id,
+        );
+        if (
+          (dep.dependency_type === 'required' && !installed) ||
+          (dep.dependency_type === 'incompatible' && installed)
+        )
+          found.push(`${item.name}: ${dep.dependency_type} ${dep.project_id || dep.version_id}`);
+      }
+    }
+    // Warnings keep the per-mod ordering the sequential version produced: local
+    // checks first, then the online ones for the same mod.
+    for (const item of items)
+      warnings.push(
+        ...(localWarnings.get(item.file) ?? []),
+        ...(remoteWarnings.get(item.file) ?? []),
+      );
     if (['fabric', 'quilt'].includes(instance.loader)) {
       const native: Record<string, string> = { minecraft: instance.minecraft };
       if (instance.loader === 'fabric' && instance.loaderVersion)

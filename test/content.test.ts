@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import { createHash } from 'node:crypto';
 import AdmZip from 'adm-zip';
 import { ContentService } from '../src/content';
-import { Network } from '../src/network';
+import { Network, HttpError } from '../src/network';
 import { Instance, ModVersion } from '../src/models';
 import { writeJson } from '../src/files';
 
@@ -136,6 +136,119 @@ test('modpack paths cannot escape an instance and server-only files are skipped'
       '{}',
     );
     await writeJson(path.join(root, 'keep.json'), { safe: true });
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+test('conflicts fetch online metadata once per version and reuse it across checks', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mc-conflicts-'));
+  const instance: Instance = {
+    id: 'test',
+    name: 'Test',
+    directory: root,
+    minecraft: '1.21.1',
+    loader: 'fabric',
+    loaderVersion: '0.16.0',
+    createdAt: '',
+  };
+  const installed = {
+    file: 'a.jar',
+    kind: 'mod' as const,
+    name: 'A',
+    projectId: 'mod-a',
+    versionId: 'a-v1',
+    hash: 'hash',
+    enabled: true,
+  };
+  const other = { ...installed, file: 'b.jar', name: 'B', projectId: 'mod-b', versionId: 'b-v1' };
+  let calls = 0;
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const net = {
+    json: async (url: string) => {
+      calls++;
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      inFlight--;
+      if (url.endsWith('/version/a-v1')) return version('a-v1', 'mod-a');
+      const missing = version('b-v1', 'mod-b');
+      missing.dependencies.push({ project_id: 'absent', dependency_type: 'required' });
+      return missing;
+    },
+  } as unknown as Network;
+  const service = new ContentService(net);
+  try {
+    await fs.mkdir(path.join(root, 'mods'), { recursive: true });
+    for (const name of ['a.jar', 'b.jar']) {
+      const zip = new AdmZip();
+      zip.addFile('pack.mcmeta', Buffer.from('{}'));
+      zip.writeZip(path.join(root, 'mods', name));
+    }
+    await writeJson(path.join(root, '.workbench', 'content.json'), [installed, other]);
+    assert.deepEqual(await service.conflicts(instance), ['B: required absent']);
+    assert.equal(calls, 2);
+    assert.equal(maxInFlight, 2);
+    assert.deepEqual(await service.conflicts(instance), ['B: required absent']);
+    assert.equal(calls, 2);
+    const offline = new ContentService({
+      json: async () => {
+        throw new Error('offline');
+      },
+    } as unknown as Network);
+    assert.deepEqual(await offline.conflicts(instance), [
+      'Online metadata unavailable; local checks only.',
+    ]);
+    const missing = new ContentService({
+      json: async () => {
+        throw new HttpError(404, 'missing');
+      },
+    } as unknown as Network);
+    assert.deepEqual(await missing.conflicts(instance), ['A: HTTP 404', 'B: HTTP 404']);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+test('conflict warnings keep the per-mod local-then-online order', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mc-conflict-order-'));
+  const instance: Instance = {
+    id: 'test',
+    name: 'Test',
+    directory: root,
+    minecraft: '1.21.1',
+    loader: 'fabric',
+    loaderVersion: '0.16.0',
+    createdAt: '',
+  };
+  const entries = ['a.jar', 'b.jar'].map((file) => ({
+    file,
+    kind: 'mod' as const,
+    name: file[0].toUpperCase(),
+    projectId: `mod-${file[0]}`,
+    versionId: `${file[0]}-v1`,
+    hash: 'hash',
+    enabled: true,
+  }));
+  const net = {
+    json: async (url: string) => {
+      const broken = version(url.split('/').pop()!, 'mod-x');
+      broken.dependencies.push({ project_id: 'absent', dependency_type: 'required' });
+      return broken;
+    },
+  } as unknown as Network;
+  const service = new ContentService(net);
+  try {
+    await fs.mkdir(path.join(root, 'mods'), { recursive: true });
+    const zip = new AdmZip();
+    zip.addFile('pack.mcmeta', Buffer.from('{}'));
+    zip.writeZip(path.join(root, 'mods', 'a.jar'));
+    await fs.writeFile(path.join(root, 'mods', 'b.jar'), 'not a zip');
+    await writeJson(path.join(root, '.workbench', 'content.json'), entries);
+    assert.deepEqual(await service.conflicts(instance), [
+      'A: required absent',
+      'b.jar: unreadable mod archive',
+      'B: required absent',
+    ]);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }
