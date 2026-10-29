@@ -13,7 +13,7 @@ import { Backups } from './backups';
 import { Item } from './views';
 import { Instance, Content, ContentKind, Account } from './models';
 import { config, t, trusted, setLanguage } from './config';
-import { exists, writeJson } from './files';
+import { exists, suggestedFilename, writeJson } from './files';
 import { describeError } from './errors';
 import { InstanceFiles } from './instance-files';
 import { ContentInstallOptions, contentFile } from './modrinth';
@@ -246,7 +246,7 @@ export class UI {
     const instance = await this.instance(item);
     this.idle(instance);
     const destination = await vscode.window.showSaveDialog({
-      defaultUri: vscode.Uri.file(`${instance.name.replace(/[^\w.-]/g, '_')}.mrpack`),
+      defaultUri: vscode.Uri.file(`${suggestedFilename(instance.name)}.mrpack`),
       filters: { 'Modrinth modpack': ['mrpack'] },
     });
     if (!destination) return;
@@ -504,7 +504,7 @@ export class UI {
   async exportInstance(item?: Item) {
     const instance = await this.instance(item);
     const destination = await vscode.window.showSaveDialog({
-      defaultUri: vscode.Uri.file(`${instance.name.replace(/[^\w.-]/g, '_')}.json`),
+      defaultUri: vscode.Uri.file(`${suggestedFilename(instance.name)}.json`),
       filters: { JSON: ['json'] },
     });
     if (destination)

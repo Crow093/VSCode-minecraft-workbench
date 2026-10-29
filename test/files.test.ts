@@ -4,7 +4,15 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import AdmZip from 'adm-zip';
-import { extractZip, offlineUuid, readJson, redact, within, writeJson } from '../src/files';
+import {
+  extractZip,
+  offlineUuid,
+  readJson,
+  redact,
+  suggestedFilename,
+  within,
+  writeJson,
+} from '../src/files';
 import { Store } from '../src/store';
 
 test('managed paths reject traversal, Windows paths and archive symlinks', async () => {
@@ -34,6 +42,19 @@ test('managed paths reject traversal, Windows paths and archive symlinks', async
 test('offline UUID matches Java UUID.nameUUIDFromBytes', () => {
   assert.equal(offlineUuid('Notch'), 'b50ad385829d3141a2167e7d7539ba7f');
   assert.notEqual(offlineUuid('Notch'), offlineUuid('notch'));
+});
+test('suggested file names keep non-ASCII names and replace characters platforms reject', () => {
+  assert.equal(suggestedFilename('我的世界 整合包'), '我的世界 整合包');
+  assert.equal(suggestedFilename('サーバー用'), 'サーバー用');
+  assert.equal(suggestedFilename('Craft/Kit: 2*?'), 'Craft_Kit_ 2_');
+  assert.equal(suggestedFilename('.hidden'), 'hidden');
+  assert.equal(suggestedFilename('  ..  '), 'instance');
+  assert.equal(suggestedFilename('', 'fallback'), 'fallback');
+  assert.equal(suggestedFilename('a'.repeat(200)), 'a'.repeat(80));
+  assert.equal(suggestedFilename('a'.repeat(79) + '😀'), 'a'.repeat(79));
+  assert.equal(suggestedFilename('CON'), 'CON_');
+  assert.equal(suggestedFilename('lpt9'), 'lpt9_');
+  assert.equal(suggestedFilename('console'), 'console');
 });
 test('tokens and proxy passwords are redacted', () => {
   const result = redact(

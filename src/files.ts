@@ -29,6 +29,22 @@ export function filename(name: string): string {
     throw new Error('Invalid filename');
   return name;
 }
+const illegal = /[\x00-\x1f<>:"/\\|?*]+/g;
+const device = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+/**
+ * Suggests a file name for an exported instance. Characters that Windows and
+ * macOS reject become underscores, while letters from every script are kept:
+ * the previous pattern rewrote CJK names into a run of underscores. Windows
+ * also refuses the reserved device names no matter the extension.
+ */
+export function suggestedFilename(value: string, fallback = 'instance'): string {
+  const kept = value.replace(illegal, '_').replace(/\s+/g, ' ').trim().slice(0, 80);
+  // A hard cut can land between the halves of a surrogate pair; dropping the
+  // orphan keeps the suggestion a string the file system will accept.
+  const name = /[\uD800-\uDBFF]$/.test(kept) ? kept.slice(0, -1) : kept;
+  const cleaned = name.replace(/^[.\s]+/, '').replace(/[.\s]+$/, '') || fallback;
+  return device.test(cleaned.split('.')[0]) ? `${cleaned}_` : cleaned;
+}
 export async function exists(target: string): Promise<boolean> {
   try {
     await fs.access(target);
